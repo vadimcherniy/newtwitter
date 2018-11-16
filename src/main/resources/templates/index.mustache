@@ -1,0 +1,22 @@
+<html>
+<head>
+    <title>New Twitter</title>
+</head>
+<body>
+    <div>
+        <form method="post">
+            <input type="text" name="message" placeholder="Put the message" />
+            <input type="text" name="tag" placeholder="Tag" />
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <div>Message list</div>
+    {{#messages}}
+    <div>
+        <b>{{id}}</b>
+        <span>{{message}}</span>
+        <i>{{tag}}</i>
+    </div>
+    {{/messages}}
+</body>
+</html>
