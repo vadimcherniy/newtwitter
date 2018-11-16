@@ -35,4 +35,14 @@ public class GreetingController {
         model.addAttribute("messages", repository.findAll());
         return "index";
     }
+
+    @PostMapping("filter")
+    public String filter(@RequestParam String tag, Model model) {
+        if (tag != null && !tag.isEmpty()) {
+            model.addAttribute("messages", repository.findByTag(tag));
+        } else {
+            model.addAttribute("messages", repository.findAll());
+        }
+        return "index";
+    }
 }
