@@ -1,6 +1,6 @@
 package com.newtwitter.repository;
 
-import com.newtwitter.Model.Message;
+import com.newtwitter.model.Message;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
