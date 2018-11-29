@@ -1,22 +1,95 @@
 package com.newtwitter.service;
 
+import com.newtwitter.model.Role;
+import com.newtwitter.model.User;
 import com.newtwitter.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.Collections;
+import java.util.UUID;
 
 @Service
 public class UserService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    @Value("${domain.path}")
+    private String domain;
 
-    public UserService(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final MailService mailService;
+
+    public UserService(UserRepository userRepository, MailService mailService) {
         this.userRepository = userRepository;
+        this.mailService = mailService;
     }
 
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
         return userRepository.findByName(userName);
     }
+
+    /**
+     * Register new user.
+     *
+     * @return true is user was register, or else false.
+     */
+    public boolean registerUser(String userName, String password, String email) {
+        User userFromDb = userRepository.findByName(userName);
+        if (userFromDb != null) {
+            return false;
+        }
+        User user = buildUser(userName, password, email);
+        userRepository.save(user);
+        sendActivationCode(user);
+        return true;
+    }
+
+    /**
+     * Activate user account by token;
+     *
+     * @param code from email.
+     * @return boolean value.
+     */
+    public boolean activateUser(String code) {
+        User user = userRepository.findByActivationCode(code);
+        if (user == null) {
+            return false;
+        }
+        user.setActive(true);
+        userRepository.save(user);
+        return true;
+    }
+
+    private void sendActivationCode(User user) {
+        if (!StringUtils.isEmpty(user.getEmail())) {
+            String message = String.format(
+                    "Hello, %s! \n" +
+                            "Welcome to NewTwitter. Please, verify your account.\n" +
+                            "Visit this link: " + domain + "/activate/%s",
+                    user.getName(), user.getActivationCode()
+            );
+
+            mailService.send(user.getEmail(), "Activate your account", message);
+        }
+    }
+
+    /**
+     * Build new user object from parameters.
+     */
+    private User buildUser(String userName, String password, String email) {
+        User user = new User();
+        user.setName(userName);
+        user.setPassword(password);
+        user.setEmail(email);
+        user.setActive(false);
+        user.setRoles(Collections.singleton(Role.USER));
+        user.setActivationCode(UUID.randomUUID().toString());
+
+        return user;
+    }
+
 }

@@ -1,23 +1,20 @@
 package com.newtwitter.controller;
 
-import com.newtwitter.model.Role;
-import com.newtwitter.model.User;
-import com.newtwitter.repository.UserRepository;
+import com.newtwitter.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.Collections;
 
 @Controller
 public class RegistrationController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public RegistrationController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public RegistrationController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/registration")
@@ -26,17 +23,28 @@ public class RegistrationController {
     }
 
     @PostMapping("/registration")
-    public String addUser(
+    public String registerUser(
             @RequestParam("username") String username,
             @RequestParam("password") String password,
+            @RequestParam("email") String email,
             Model model
     ) {
-        User userFromDb = userRepository.findByName(username);
-        if (userFromDb != null) {
+        if (!userService.registerUser(username, password, email)) {
             model.addAttribute("message", "User is exists");
             return "registration";
         }
-        userRepository.save(new User(username, password, true, Collections.singleton(Role.USER)));
-        return "redirect:/login";
+            return "redirect:/login";
     }
+
+    @GetMapping("/activate/{code}")
+    public String activateUserAccount(@PathVariable String code, Model model) {
+        boolean isActivated = userService.activateUser(code);
+        if (isActivated) {
+            model.addAttribute("message", "User successfully activated");
+        } else {
+            model.addAttribute("message", "Activation code is not found");
+        }
+        return "login";
+    }
+
 }
