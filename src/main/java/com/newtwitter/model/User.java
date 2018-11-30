@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 import java.util.Set;
 
@@ -18,12 +19,20 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-    private String name;
+    @NotBlank(message = "Field username cant't be empty")
+    private String username;
 
+    @NotBlank(message = "Field password cant't be empty")
     private String password;
+
+    @Transient
+    @NotBlank(message = "Field confirmation password cant't be empty")
+    private String confirmPassword;
 
     private boolean active;
 
+    @NotBlank(message = "Field email cant't be empty")
+    @Email
     private String email;
 
     private String activationCode;
@@ -48,7 +57,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return getName();
+        return username;
     }
 
     @Override
@@ -79,12 +88,8 @@ public class User implements UserDetails {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
@@ -125,5 +130,13 @@ public class User implements UserDetails {
 
     public void setActivationCode(String activationCode) {
         this.activationCode = activationCode;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 }

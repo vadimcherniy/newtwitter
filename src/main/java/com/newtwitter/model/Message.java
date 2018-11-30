@@ -1,6 +1,9 @@
 package com.newtwitter.model;
 
+import org.hibernate.validator.constraints.Length;
+
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 
 @Entity
 public class Message {
@@ -9,8 +12,11 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private String message;
+    @NotBlank(message = "Field can't be empty")
+    @Length(max = 2048, message = "Message to long (more than 2048 chars)")
+    private String text;
 
+    @Length(max = 255, message = "Message to long (more than 255 chars)")
     private String tag;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -21,8 +27,8 @@ public class Message {
     public Message() {
     }
 
-    public Message(String message, String tag, User user) {
-        this.message = message;
+    public Message(String text, String tag, User user) {
+        this.text = text;
         this.tag = tag;
         this.author = user;
     }
@@ -35,12 +41,12 @@ public class Message {
         this.id = id;
     }
 
-    public String getMessage() {
-        return message;
+    public String getText() {
+        return text;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setText(String text) {
+        this.text = text;
     }
 
     public String getTag() {
@@ -68,6 +74,6 @@ public class Message {
     }
 
     public String getAuthorName() {
-        return author != null ? author.getName() : "<none>";
+        return author != null ? author.getUsername() : "<none>";
     }
 }

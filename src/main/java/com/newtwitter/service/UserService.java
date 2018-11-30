@@ -3,10 +3,12 @@ package com.newtwitter.service;
 import com.newtwitter.model.Role;
 import com.newtwitter.model.User;
 import com.newtwitter.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -19,17 +21,18 @@ public class UserService implements UserDetailsService {
     @Value("${domain.path}")
     private String domain;
 
-    private final UserRepository userRepository;
-    private final MailService mailService;
+    @Autowired
+    private UserRepository userRepository;
 
-    public UserService(UserRepository userRepository, MailService mailService) {
-        this.userRepository = userRepository;
-        this.mailService = mailService;
-    }
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        return userRepository.findByName(userName);
+        return userRepository.findByUsername(userName);
     }
 
     /**
@@ -37,12 +40,12 @@ public class UserService implements UserDetailsService {
      *
      * @return true is user was register, or else false.
      */
-    public boolean registerUser(String userName, String password, String email) {
-        User userFromDb = userRepository.findByName(userName);
+    public boolean registerUser(User user) {
+        User userFromDb = userRepository.findByUsername(user.getUsername());
         if (userFromDb != null) {
             return false;
         }
-        User user = buildUser(userName, password, email);
+        modifyUser(user);
         userRepository.save(user);
         sendActivationCode(user);
         return true;
@@ -68,7 +71,7 @@ public class UserService implements UserDetailsService {
      * Save user.
      */
     public void userSave(String name, Map<String, String> form, User user) {
-        user.setName(name);
+        user.setUsername(name);
         user.getRoles().clear();
         Set<String> roles = Arrays.stream(Role.values()).map(Enum::name).collect(Collectors.toSet());
         for (String key : form.keySet()) {
@@ -114,7 +117,7 @@ public class UserService implements UserDetailsService {
                     "Hello, %s! \n" +
                             "Welcome to NewTwitter. Please, verify your account.\n" +
                             "Visit this link: " + domain + "/activate/%s",
-                    user.getName(), user.getActivationCode()
+                    user.getUsername(), user.getActivationCode()
             );
 
             mailService.send(user.getEmail(), "Activate your account", message);
@@ -122,17 +125,12 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * Build new user object from parameters.
+     * Modify user object.
      */
-    private User buildUser(String userName, String password, String email) {
-        User user = new User();
-        user.setName(userName);
-        user.setPassword(password);
-        user.setEmail(email);
+    private void modifyUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setActive(false);
         user.setRoles(Collections.singleton(Role.USER));
         user.setActivationCode(UUID.randomUUID().toString());
-
-        return user;
     }
 }

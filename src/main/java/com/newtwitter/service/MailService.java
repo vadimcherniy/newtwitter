@@ -1,5 +1,6 @@
 package com.newtwitter.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,11 +12,8 @@ public class MailService {
     @Value("${spring.mail.username}")
     private String mailFrom;
 
-    private final JavaMailSender mailSender;
-
-    public MailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    @Autowired
+    private JavaMailSender mailSender;
 
     public void send(String mailTo, String subject, String message) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();

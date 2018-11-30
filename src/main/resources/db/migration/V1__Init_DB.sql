@@ -4,7 +4,7 @@ create table message (
     id bigint not null,
     file_name varchar(255),
     tag varchar(255),
-    message varchar(2048) not null,
+    text varchar(2048) not null,
     user_id bigint,
     primary key (id)
 );
@@ -20,7 +20,7 @@ create table users (
     active boolean not null,
     email varchar(255),
     password varchar(255) not null,
-    name varchar(255) not null,
+    username varchar(255) not null,
     primary key (id)
 );
 

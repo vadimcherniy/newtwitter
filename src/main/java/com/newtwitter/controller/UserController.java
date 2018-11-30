@@ -3,6 +3,7 @@ package com.newtwitter.controller;
 import com.newtwitter.model.Role;
 import com.newtwitter.model.User;
 import com.newtwitter.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -15,11 +16,8 @@ import java.util.Map;
 @RequestMapping("/user")
 public class UserController {
 
-    private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -39,17 +37,17 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     public String save(
-            @RequestParam String name,
+            @RequestParam String username,
             @RequestParam Map<String, String> form,
             @RequestParam("userId") User user
     ) {
-        userService.userSave(name, form, user);
+        userService.userSave(username, form, user);
         return "redirect:/user";
     }
 
     @GetMapping("/profile")
     public String getProfile(Model model, @AuthenticationPrincipal User user) {
-        model.addAttribute("username", user.getName());
+        model.addAttribute("username", user.getUsername());
         model.addAttribute("email", user.getEmail());
 
         return "profile";

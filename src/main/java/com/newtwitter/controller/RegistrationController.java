@@ -1,21 +1,22 @@
 package com.newtwitter.controller;
 
+import com.newtwitter.model.User;
 import com.newtwitter.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.validation.Valid;
 
 @Controller
 public class RegistrationController {
 
-    private final UserService userService;
-
-    public RegistrationController(UserService userService) {
-        this.userService = userService;
-    }
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/registration")
     public String registration() {
@@ -24,13 +25,21 @@ public class RegistrationController {
 
     @PostMapping("/registration")
     public String registerUser(
-            @RequestParam("username") String username,
-            @RequestParam("password") String password,
-            @RequestParam("email") String email,
+            @Valid User user,
+            BindingResult bindingResult,
             Model model
     ) {
-        if (!userService.registerUser(username, password, email)) {
-            model.addAttribute("message", "User is exists");
+        if (user.getPassword() != null && !user.getPassword().equals(user.getConfirmPassword())) {
+            model.addAttribute("passwordError","Passwords must be the same");
+        }
+
+        if (bindingResult.hasErrors()) {
+            model.mergeAttributes(ControllerUtils.getErrors(bindingResult));
+            return "registration";
+        }
+
+        if (!userService.registerUser(user)) {
+            model.addAttribute("usernameError", "User is exists");
             return "registration";
         }
             return "redirect:/login";
