@@ -10,8 +10,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -64,6 +64,50 @@ public class UserService implements UserDetailsService {
         return true;
     }
 
+    /**
+     * Save user.
+     */
+    public void userSave(String name, Map<String, String> form, User user) {
+        user.setName(name);
+        user.getRoles().clear();
+        Set<String> roles = Arrays.stream(Role.values()).map(Enum::name).collect(Collectors.toSet());
+        for (String key : form.keySet()) {
+            if (roles.contains(key)) {
+                user.getRoles().add(Role.valueOf(key));
+            }
+        }
+        userRepository.save(user);
+    }
+
+    /**
+     * Update user.
+     */
+    public void updateProfile(User user, String password, String email) {
+        boolean isEmailChanged = email != null && !email.isEmpty() && !email.equals(user.getEmail());
+
+        if (isEmailChanged) {
+            user.setEmail(email);
+            user.setActivationCode(UUID.randomUUID().toString());
+        }
+
+        if (password != null && !password.isEmpty()) {
+            user.setPassword(password);
+        }
+
+        userRepository.save(user);
+
+        if (isEmailChanged) {
+            sendActivationCode(user);
+        }
+    }
+
+    /**
+     * Get all users.
+     */
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
     private void sendActivationCode(User user) {
         if (!StringUtils.isEmpty(user.getEmail())) {
             String message = String.format(
@@ -91,5 +135,4 @@ public class UserService implements UserDetailsService {
 
         return user;
     }
-
 }
