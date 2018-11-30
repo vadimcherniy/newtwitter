@@ -60,7 +60,7 @@ public class MainController {
             model.addAttribute("message", message);
         } else {
             if (file != null && !Objects.requireNonNull(file.getOriginalFilename()).isEmpty()) {
-                message.setFileName(ControllerUtils.saveFile(file));
+                message.setFileName(saveFile(file));
             }
             model.addAttribute("message", null);
             messageRepository.save(message);
@@ -68,5 +68,15 @@ public class MainController {
 
         model.addAttribute("messages", messageRepository.findAll());
         return "main";
+    }
+
+    private String saveFile(MultipartFile file) throws IOException {
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdir();
+        }
+        String uuidFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        file.transferTo(new File(uploadPath + "/" + uuidFileName));
+        return uuidFileName;
     }
 }
